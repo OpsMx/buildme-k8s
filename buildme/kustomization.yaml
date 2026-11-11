@@ -5,4 +5,4 @@ resources:
 - service.yaml
 images:
 - name: docker.io/opsmx11/dev-buildme-demo
-  newTag: 72-critical
+  newTag: 73-nocritical
