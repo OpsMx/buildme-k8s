@@ -14,6 +14,47 @@ spec:
       labels:
         app: buildme
     spec:
+      initContainers:
+      - name: api-validation
+        image: curlimages/curl:8.12.1
+        env:
+        - name: TOKEN
+          value: "eyJhbGciOiJSUzI1NiIsImtpZCI6IjJiODNkZWRhLTY3NjMtNGJiYS1iYjI5LTEwYmM5YWEwOWVhNiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJPcHNNeCIsImF1ZCI6WyJzc2Qub3BzbXguaW8iXSwiZXhwIjoxNzk1MDkyMDE5LCJuYmYiOjE3OTUwMDU2MTksImp0aSI6ImFiY2QxMjM0Iiwic3NkLm9wc214LmlvIjp7InR5cGUiOiJpbnRlZ3JhdGlvbi92MSIsIm9yZ0lEIjoiNDAzYzY0OGUtZjcyNS00NjkyLTk1ZWItNmU0MzBjNzZiYzNjIiwidGVhbUlEIjoiMzgyNzg3ZTctMjFmNy00ZGMzLWE0ZDgtMTZlMzJjOWUxNzY2In19.KiPsysp_UFWEl2IXp5GNVHiWqXgk-X9bhuU7w2Gd5E9wvmoBVHHXcuHoge68ut0kobyxW8hPxy9_KHdx3662-AYb0RdpGF3nPHCQk9ncbi_j0QuGhw1qYFYQZmuSUr-apCySapiM-_kgZ_i8oWZ1MyKn-cC_B3lUbCoBQLKPxk9TRoQ8oRzCXjWPFIPQQa52WucD2arMO1tM9MXs_QBad_d5zL6l3e4amgeyZHlYpKsIqu-rjPFpLCtm9tshBYlK77JJe3vD3SXcVg9ORnZ7LdhxKe5zmhI6E6s5uoMOn1KomhMxB8eoZGU9JxMGSiJ9aASYrMxnO3b3VX4ln03uYA"
+        - name: ARTIFACT_NAME
+          value: docker.io/opsmx11/dev-buildme-demo
+        - name: ARTIFACT_TAG
+          value: "10-nocritical"
+        command:
+        - sh
+        - -c
+        - |
+          while true; do
+            RESPONSE=$(curl --location \
+              --silent \
+              --output /tmp/response.json \
+              --write-out "%{http_code}" \
+              "https://ssd.ssd-demo.opsmx.net/webhook/api/v1/datacollection" \
+              --header "X-OpsMx-Auth: $TOKEN" \
+              --header "Content-Type: application/json" \
+              --data "{
+                \"organizationName\": \"opsmx\",
+                \"artifactName\": \"$ARTIFACT_NAME\",
+                \"artifactTag\": \"$ARTIFACT_TAG\"
+              }")
+
+            echo "API Status: $RESPONSE"
+
+            if [ "$RESPONSE" = "201" ] || [ "$RESPONSE" = "208" ]; then
+              echo "Status is $RESPONSE. Retrying after 15 seconds..."
+              sleep 15
+            else
+              echo "Status is $RESPONSE. Stopping retries."
+              echo "API Response Body:"
+              cat /tmp/response.json
+              break
+            fi
+          done
+
       containers:
       - name: buildme
         image: docker.io/opsmx11/dev-buildme-demo:10-nocritical
