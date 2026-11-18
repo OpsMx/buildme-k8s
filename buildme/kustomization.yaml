@@ -1,8 +1,34 @@
+
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+
 resources:
 - deployment.yaml
 - service.yaml
+
 images:
 - name: docker.io/opsmx11/dev-buildme-demo
   newTag: 96-
+
+replacements:
+- source:
+    kind: Deployment
+    name: buildme
+    fieldPath: spec.template.spec.containers.[name=buildme].image
+  targets:
+  - select:
+      kind: Deployment
+      name: buildme
+    fieldPaths:
+    - spec.template.spec.initContainers.[name=api-validation].env.[name=ARTIFACT_NAME].value
+    options:
+      delimiter: ':'
+      index: 0
+  - select:
+      kind: Deployment
+      name: buildme
+    fieldPaths:
+    - spec.template.spec.initContainers.[name=api-validation].env.[name=ARTIFACT_TAG].value
+    options:
+      delimiter: ':'
+      index: 1
