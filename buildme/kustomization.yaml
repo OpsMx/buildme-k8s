@@ -1,14 +1,11 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 resources:
 - deployment.yaml
 - service.yaml
-
 images:
 - name: docker.io/opsmx11/dev-buildme-demo
-  newTag: 96-
-
+  newTag: 97-
 replacements:
 - source:
     kind: Deployment
